@@ -4,8 +4,8 @@ from time import strftime
 import ipaddress
 
 import requests
-from sendgrid import *
-from sendgrid.helpers.mail import *
+#from sendgrid import *
+#from sendgrid.helpers.mail import *
 
 # NameSilo API Python3 Implementation - Specifically for DDNS support.
 # NameSilo Dynamic DNS IP Address Updater.
@@ -45,16 +45,15 @@ from sendgrid.helpers.mail import *
 
 # Domains and hosts to update.
 domains_and_hosts = (
-    ["arebenji.com", ["home"]],
-    ["arebenji.online", ["home"]],
-    ["benjaminrosner.com", [""]],
-    ["r-ben.com", ["", "freedom"]]
+    ["example.com", ["www", "reve", "jack", "gitea", "homeas"]],
 )
+
+requests.packages.urllib3.util.connection.HAS_IPV6 = False
 
 record_ttl = "3600"
 
 # Outgoing Email Settings
-send_mail = True
+send_mail = False
 send_time = int(strftime('%I')) % 8 == 0  # Send an email at 8AM and 8PM.  Set to True to always send.
 email_from_address = "no-reply@freedom-mail.r-ben.com"
 email_from_name = "Freedom-Systems Admin"
@@ -66,7 +65,7 @@ subject = "DNS update notification, timestamped: " + strftime('%x %H:%M:%S')  # 
 #  STOP EDITING!                 You're done!  Congratulations.  Now give us a whirl!                   STOP EDITING! #
 #######################################################################################################################
 #######################################################################################################################
-namesilo_api_key = os.environ.get('NAMESILO_API_KEY')
+namesilo_api_key = 'xxxxxxxxxxxxxxxxx' #os.environ.get('NAMESILO_API_KEY')
 NAMESILO_COM_API = 'https://www.namesilo.com/api'
 NAMESILO_API_IMPLEMENTED_OPERATIONS = {'dnsListRecords', 'dnsUpdateRecord', 'dnsAddRecord', 'dnsDeleteRecord'}
 
@@ -158,15 +157,16 @@ class NameSilo_APIv1:
         # If no type given, assume an IP value in, otherwise, type must be given
         # Because we don't know what kind of type user want
         if not type:
-            try:
-                ip_address = ipaddress.ip_address(value)
-            except ValueError:
-                log('{} is not a valid IPv4/IPv6 address, type must be given'.format(value))
-                return
-            if(ip_address.version == 4):
-                type = 'A'
-            else:
-                type = 'AAAA'
+            #try:
+            #    ip_address = ipaddress.ip_address(value)
+            #except ValueError:
+            #    log('{} is not a valid IPv4/IPv6 address, type must be given'.format(value))
+            #    return
+            #if(ip_address.version == 4):
+            #    type = 'A'
+            #else:
+            #    type = 'AAAA'
+            type = 'A'
         log('DDNS update starting for domain: {} and record type {}'.format(self.domain, type))
         # Generator for hosts that require an record update.
         hosts_requiring_updates = (
@@ -292,6 +292,7 @@ def log(message):
 def update_records():
     log("DDNS operation started at {}".format(strftime('%x %H:%M:%S')))
     for domain, hosts in domains_and_hosts:
+        print('update {} {} with ip: {}'.format(domain, hosts, _current_ip))
         NameSilo_APIv1(domain, hosts).dynamic_dns_update(_current_ip)
     if send_mail and send_time:
         send_message()
@@ -320,5 +321,6 @@ def send_message():
 
 
 if __name__=="__main__":
-    _current_ip = _web_worker.get('https://api.ipify.org/?format=json').json()['ip']  # GET our current IP.
+    #_current_ip = _web_worker.get('https://api.ipify.org/?format=json').json()['ip']  # GET our current IP.
+    _current_ip = _web_worker.get('http://ifconfig.io/ip').text
     update_records()
